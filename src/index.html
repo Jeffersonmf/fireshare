@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fireshare</title>
+<style>
+  :root { --bg:#0b1220; --card:#131c2e; --fg:#e6edf7; --mute:#8b9bc2; --acc:#f5a524; --ok:#10b981; --err:#ef4444; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
+  h1 { margin: 0 0 4px; font-size: 26px; } h1 span { color: var(--acc); }
+  p.sub { margin: 0 0 20px; color: var(--mute); }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  input[type=password], input[type=text] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #2a3756; background: #0e1626; color: var(--fg); }
+  button, label.btn { display:inline-block; padding: 9px 14px; border-radius: 8px; border: 0; background: var(--acc); color: #1a1205; font-weight: 600; cursor: pointer; }
+  .row { display:flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  #drop { border: 2px dashed #2a3756; border-radius: 12px; padding: 28px; text-align: center; color: var(--mute); }
+  #drop.over { border-color: var(--acc); color: var(--fg); }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 6px 4px; border-bottom: 1px solid #22304d; text-align: left; word-break: break-all; }
+  th { color: var(--mute); font-weight: 500; } td.n { text-align: right; white-space: nowrap; color: var(--mute); }
+  a { color: #7fb8ff; }
+  #log div { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .ok { color: var(--ok); } .err { color: var(--err); }
+  progress { width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🔥 <span>fire</span>share</h1>
+  <p class="sub">Envie e baixe arquivos desta máquina. Tudo exige o token mostrado no terminal do <code>fireshare serve</code>.</p>
+
+  <div class="card">
+    <input id="token" type="password" placeholder="token" autocomplete="off">
+  </div>
+
+  <div class="card">
+    <div id="drop">Arraste arquivos aqui</div>
+    <div class="row">
+      <label class="btn">Arquivos<input id="files" type="file" multiple hidden></label>
+      <label class="btn">Pasta<input id="folder" type="file" webkitdirectory multiple hidden></label>
+      <label><input id="overwrite" type="checkbox"> sobrescrever</label>
+    </div>
+    <progress id="bar" value="0" max="1" hidden></progress>
+    <div id="log"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin:0 0 8px"><strong style="flex:1">Arquivos compartilhados</strong><button id="refresh">Atualizar</button></div>
+    <table><thead><tr><th>Arquivo</th><th class="n">Tamanho</th></tr></thead><tbody id="list"></tbody></table>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const tokenBox = $("token");
+try { tokenBox.value = localStorage.getItem("fireshare.token") || ""; } catch (_) {}
+tokenBox.addEventListener("change", () => { try { localStorage.setItem("fireshare.token", tokenBox.value); } catch (_) {} refresh(); });
+
+const enc = (p) => p.split("/").map(encodeURIComponent).join("/");
+const human = (n) => { const u = ["B","KB","MB","GB","TB"]; let i = 0; while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; } return n.toFixed(i ? 1 : 0) + " " + u[i]; };
+const log = (msg, cls) => { const d = document.createElement("div"); d.textContent = msg; if (cls) d.className = cls; $("log").prepend(d); };
+
+async function refresh() {
+  const body = $("list");
+  body.innerHTML = "";
+  if (!tokenBox.value) return;
+  const r = await fetch("/api/files", { headers: { Authorization: "Bearer " + tokenBox.value } });
+  if (!r.ok) { log("lista: " + r.status + " " + (await r.text()), "err"); return; }
+  for (const f of await r.json()) {
+    const tr = document.createElement("tr");
+    const a = document.createElement("a");
+    a.href = "/api/files/" + enc(f.path) + "?token=" + encodeURIComponent(tokenBox.value);
+    a.textContent = f.path;
+    a.setAttribute("download", f.path.split("/").pop());
+    const td = document.createElement("td"); td.appendChild(a);
+    const size = document.createElement("td"); size.className = "n"; size.textContent = human(f.size);
+    tr.append(td, size); body.appendChild(tr);
+  }
+}
+
+function put(file, path) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/api/files/" + enc(path) + "?overwrite=" + $("overwrite").checked);
+    xhr.setRequestHeader("Authorization", "Bearer " + tokenBox.value);
+    const bar = $("bar"); bar.hidden = false; bar.value = 0;
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) bar.value = e.loaded / e.total; };
+    xhr.onload = () => {
+      if (xhr.status === 201) { const s = JSON.parse(xhr.responseText); log("✔ " + s.path + " (" + human(s.size) + ") sha256 " + s.sha256.slice(0, 12) + "…", "ok"); }
+      else log("✘ " + path + ": " + xhr.status + " " + xhr.responseText, "err");
+      resolve();
+    };
+    xhr.onerror = () => { log("✘ " + path + ": falha de rede", "err"); resolve(); };
+    xhr.send(file);
+  });
+}
+
+async function sendAll(files) {
+  if (!tokenBox.value) { log("informe o token", "err"); return; }
+  for (const f of files) await put(f, f.webkitRelativePath || f.name);
+  $("bar").hidden = true;
+  refresh();
+}
+
+$("files").addEventListener("change", (e) => sendAll([...e.target.files]));
+$("folder").addEventListener("change", (e) => sendAll([...e.target.files]));
+$("refresh").addEventListener("click", refresh);
+const drop = $("drop");
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); sendAll([...e.dataTransfer.files]); });
+refresh();
+</script>
+</body>
+</html>

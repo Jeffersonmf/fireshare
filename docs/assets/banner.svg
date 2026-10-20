@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14161c"/>
+      <stop offset="100%" stop-color="#1f232d"/>
+    </linearGradient>
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#e2361f"/>
+      <stop offset="55%" stop-color="#f57c1f"/>
+      <stop offset="100%" stop-color="#fbb534"/>
+    </linearGradient>
+    <linearGradient id="fireH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e2361f"/>
+      <stop offset="100%" stop-color="#fbb534"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f57c1f"/>
+    </marker>
+    <marker id="arrowDim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6275"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- title -->
+  <text x="600" y="54" text-anchor="middle" font-size="34" font-weight="800" letter-spacing="0.5">
+    <tspan fill="url(#fireH)">Fire</tspan><tspan fill="#f3f4f7">share</tspan>
+  </text>
+  <text x="600" y="84" text-anchor="middle" fill="#9aa1b3" font-size="15">
+    files between machines on one port · token · sha256 · atomic · streaming
+  </text>
+
+  <!-- clients -->
+  <g font-size="16" font-weight="600" filter="url(#shadow)">
+    <g transform="translate(60,118)">
+      <rect width="250" height="66" rx="14" fill="#1b1e26" stroke="#f57c1f" stroke-width="2"/>
+      <circle cx="36" cy="33" r="19" fill="#262a34" stroke="#f57c1f" stroke-width="2"/>
+      <path d="M28,26 L35,33 L28,40 M38,41 H45" stroke="#f3f4f7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <text x="68" y="30" fill="#f3f4f7">CLI</text>
+      <text x="68" y="50" fill="#9aa1b3" font-size="12" font-weight="400">send · get · ls</text>
+    </g>
+    <g transform="translate(60,200)">
+      <rect width="250" height="66" rx="14" fill="#1b1e26" stroke="#f57c1f" stroke-width="2"/>
+      <circle cx="36" cy="33" r="19" fill="#262a34" stroke="#f57c1f" stroke-width="2"/>
+      <g stroke="#f3f4f7" stroke-width="2" fill="none">
+        <circle cx="36" cy="33" r="10"/>
+        <ellipse cx="36" cy="33" rx="4.5" ry="10"/>
+        <path d="M26,33 H46"/>
+      </g>
+      <text x="68" y="30" fill="#f3f4f7">Browser</text>
+      <text x="68" y="50" fill="#9aa1b3" font-size="12" font-weight="400">nothing to install</text>
+    </g>
+    <g transform="translate(60,282)">
+      <rect width="250" height="66" rx="14" fill="#1b1e26" stroke="#5b6275" stroke-width="2" stroke-dasharray="6 5"/>
+      <circle cx="36" cy="33" r="19" fill="#262a34" stroke="#5b6275" stroke-width="2"/>
+      <g stroke="#c7cad3" stroke-width="2" fill="#262a34">
+        <path d="M36,25 L28,40 M36,25 L44,40 M28,40 H44" fill="none"/>
+        <circle cx="36" cy="25" r="3.5"/><circle cx="28" cy="40" r="3.5"/><circle cx="44" cy="40" r="3.5"/>
+      </g>
+      <text x="68" y="30" fill="#c7cad3">Socket</text>
+      <text x="68" y="50" fill="#7d8496" font-size="12" font-weight="400">live events · roadmap</text>
+    </g>
+  </g>
+
+  <!-- links -->
+  <g fill="none" stroke-width="2.5">
+    <path d="M314,151 C400,151 400,233 470,233" stroke="#f57c1f" marker-end="url(#arrow)"/>
+    <path d="M314,233 H470" stroke="#f57c1f" marker-end="url(#arrow)"/>
+    <path d="M314,315 C400,315 400,233 470,233" stroke="#5b6275" stroke-dasharray="6 5" marker-end="url(#arrowDim)"/>
+  </g>
+  <text x="392" y="140" text-anchor="middle" fill="#9aa1b3" font-size="12">HTTP :7878</text>
+
+  <!-- server -->
+  <g transform="translate(476,150)" filter="url(#shadow)">
+    <rect width="270" height="166" rx="18" fill="#1b1e26" stroke="url(#fire)" stroke-width="2.5"/>
+    <path d="M44,96 C24,76 34,52 50,38 C48,54 58,60 62,52 C66,64 78,70 74,90 C72,104 56,110 44,96 Z" fill="url(#fire)"/>
+    <text x="96" y="58" fill="#f3f4f7" font-size="19" font-weight="700">fireshare serve</text>
+    <text x="96" y="82" fill="#9aa1b3" font-size="12.5">Bearer token · constant time</text>
+    <text x="96" y="102" fill="#9aa1b3" font-size="12.5">sha256 while streaming</text>
+    <text x="96" y="122" fill="#9aa1b3" font-size="12.5">temp → atomic rename</text>
+    <text x="96" y="142" fill="#9aa1b3" font-size="12.5">confined to one directory</text>
+  </g>
+
+  <!-- storage -->
+  <path d="M750,233 H846" fill="none" stroke="#f57c1f" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <g transform="translate(856,174)" filter="url(#shadow)">
+    <rect width="284" height="118" rx="16" fill="#1b1e26" stroke="#3a3f4d" stroke-width="2"/>
+    <path d="M28,34 h26 l8,8 h44 v52 h-78 z" fill="#262a34" stroke="#f57c1f" stroke-width="2"/>
+    <text x="128" y="50" fill="#f3f4f7" font-size="17" font-weight="600">./shared</text>
+    <text x="128" y="72" fill="#9aa1b3" font-size="12.5">files and folders</text>
+    <text x="128" y="92" fill="#9aa1b3" font-size="12.5">nothing outside, ever</text>
+  </g>
+
+  <text x="600" y="382" text-anchor="middle" fill="#7d8496" font-size="13">Rust · axum · reqwest · tokio · one binary, both ends</text>
+</svg>
