@@ -4,6 +4,7 @@
 
 # 🔥 Fireshare
 
+[![CI](https://github.com/Jeffersonmf/fireshare/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Jeffersonmf/fireshare/actions/workflows/ci.yml)
 ![Rust](https://img.shields.io/badge/rust-2024%20edition-f57c1f.svg?logo=rust)
 ![Tests](https://img.shields.io/badge/tests-13%20passing-brightgreen.svg)
 ![Clippy](https://img.shields.io/badge/clippy%20--D%20warnings-0-brightgreen.svg)
