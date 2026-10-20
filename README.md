@@ -111,7 +111,7 @@ make serve TOKEN=my-token          # same as: fireshare serve --dir ./shared --p
 
 ```bash
 export FIRESHARE_SERVER=http://192.168.15.6:7878 FIRESHARE_TOKEN=my-token
-fireshare send ./polaris-workers ./HANDOFF.md --as handoff   # folders go recursively
+fireshare send ./projeto ./HANDOFF.md --as handoff   # folders go recursively
 fireshare ls
 fireshare get handoff/HANDOFF.md -o ./in
 fireshare get --all -o ./in
