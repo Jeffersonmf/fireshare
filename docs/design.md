@@ -1,109 +1,109 @@
-# Design: hoje e o caminho para produto
+# Design: today and the path to a product
 
-Este documento explica como o fireshare funciona hoje e como ele foi
-cortado para crescer até virar produto: interface, socket e CLI sobre o
-mesmo núcleo. O que está marcado como **roadmap** ainda não existe.
+This document explains how fireshare works today and how it was cut to
+grow into a product: an interface, a socket and a CLI over the same core.
+Anything marked **roadmap** does not exist yet.
 
-## 1. O que existe hoje
+## 1. What exists today
 
 ```mermaid
 flowchart LR
-    subgraph clientes
+    subgraph clients
         CLI["CLI\nsend · get · ls"]
-        WEB["Página web\n(embutida no binário)"]
+        WEB["Web page\n(embedded in the binary)"]
     end
     CLI -->|HTTP + Bearer| R
     WEB -->|HTTP + Bearer| R
-    subgraph servidor["fireshare serve"]
-        R["router axum"] --> A["middleware de token"]
+    subgraph server["fireshare serve"]
+        R["axum router"] --> A["token middleware"]
         A --> L["GET /api/files"]
         A --> D["GET /api/files/{path}"]
         A --> U["PUT /api/files/{path}"]
-        P["paths::clean\n(único portão rede → disco)"]
+        P["paths::clean\n(the only gate network → disk)"]
         D --> P
         U --> P
     end
     U -->|stream + sha256| T[".fireshare-tmp/"]
-    T -->|rename atômico| S[("./shared")]
+    T -->|atomic rename| S[("./shared")]
     D --> S
 ```
 
-| Peça | Arquivo | Responsabilidade |
+| Piece | File | Responsibility |
 |---|---|---|
-| Regras de caminho | `src/paths.rs` | Aceita só nomes relativos simples; recusa `..`, absoluto, `\`, NUL e a área temporária. É compartilhada por cliente e servidor |
-| Servidor | `src/server.rs` | Rotas, token em tempo constante, upload em stream com hash e limite, download com hash, listagem |
-| Cliente | `src/client.rs` | Upload (com hash enviado), envio recursivo de pastas, download verificado, listagem |
-| Página | `src/index.html` | Arrastar e soltar, pasta inteira, progresso, links de download; não instala nada |
-| CLI | `src/main.rs` | `serve`, `send`, `get`, `ls`; toda flag também lê uma variável `FIRESHARE_*` |
+| Path rules | `src/paths.rs` | Accepts plain relative names only; rejects `..`, absolute paths, `\`, NUL and the temp area. Shared by client and server |
+| Server | `src/server.rs` | Routes, constant-time token check, streaming upload with hash and size limit, download with hash, listing |
+| Client | `src/client.rs` | Upload (sending the hash), recursive folder send, verified download, listing |
+| Page | `src/index.html` | Drag and drop, whole folders, progress, download links; nothing to install |
+| CLI | `src/main.rs` | `serve`, `send`, `get`, `ls`; every flag also reads a `FIRESHARE_*` variable |
 
-## 2. Protocolo
+## 2. Protocol
 
-| Rota | Auth | Resposta |
+| Route | Auth | Response |
 |---|---|---|
-| `GET /` | não | Página web |
-| `GET /health` | não | `ok` |
-| `GET /api/files` | sim | `[{path, size, modified}]`, ordenado por `path` |
-| `GET /api/files/{path}` | sim | Bytes do arquivo; `x-content-sha256`, `content-length`, `content-disposition` |
-| `PUT /api/files/{path}?overwrite=true` | sim | `201 {path, size, sha256}` |
+| `GET /` | no | Web page |
+| `GET /health` | no | `ok` |
+| `GET /api/files` | yes | `[{path, size, modified}]`, sorted by `path` |
+| `GET /api/files/{path}` | yes | File bytes; `x-content-sha256`, `content-length`, `content-disposition` |
+| `PUT /api/files/{path}?overwrite=true` | yes | `201 {path, size, sha256}` |
 
-| Erro | Quando |
+| Error | When |
 |---|---|
-| `400` | Caminho inválido |
-| `401` | Token ausente ou errado |
-| `404` | Arquivo inexistente, ou fora da pasta via symlink |
-| `409` | Arquivo já existe e não pediu `overwrite` |
-| `413` | Upload acima de `--max-mib` (descartado) |
-| `422` | O SHA-256 enviado não bate com o recebido (descartado) |
+| `400` | Invalid path |
+| `401` | Missing or wrong token |
+| `404` | No such file, or outside the share through a symlink |
+| `409` | File exists and `overwrite` was not asked for |
+| `413` | Upload above `--max-mib` (discarded) |
+| `422` | The SHA-256 sent does not match what arrived (discarded) |
 
-O token vai em `Authorization: Bearer <token>`. Para links que o navegador
-abre direto, também é aceito em `?token=`.
+The token goes in `Authorization: Bearer <token>`. For links the browser
+opens directly, it is also accepted as `?token=`.
 
-## 3. Garantias e por que existem
+## 3. Guarantees and why they exist
 
-- **Nada pela metade:**
-  - O upload é escrito em `.fireshare-tmp/<aleatório>` e só depois renomeado. A área temporária fica dentro da pasta compartilhada, então o rename nunca cruza sistemas de arquivo e é atômico.
-  - O download usa `.<nome>.fireshare-part` do mesmo jeito.
-- **Integridade:**
-  - O cliente calcula o SHA-256 antes de enviar. O servidor calcula durante o stream e recusa se não bater.
-  - No download, o servidor anuncia o hash e o cliente confere.
-  - A página web não manda hash (o `crypto.subtle` do navegador só existe em HTTPS), mas mostra o hash que o servidor gravou.
-- **Confinamento:**
-  - `paths::clean` é o único caminho entre a rede e o disco.
-  - O download ainda resolve o caminho real e exige que ele fique dentro da raiz, o que barra symlinks.
-- **Memória constante:** tudo é stream; nenhum arquivo é carregado inteiro.
+- **Nothing half-written:**
+  - An upload is written to `.fireshare-tmp/<random>` and only then renamed. The temp area lives inside the shared directory, so the rename never crosses filesystems and is atomic.
+  - A download uses `.<name>.fireshare-part` the same way.
+- **Integrity:**
+  - The client computes the SHA-256 before sending. The server computes it while streaming and refuses a mismatch.
+  - On download, the server announces the hash and the client checks it.
+  - The web page sends no hash (the browser's `crypto.subtle` only exists over HTTPS), but it shows the hash the server stored.
+- **Confinement:**
+  - `paths::clean` is the only way from the network to the disk.
+  - Downloads also resolve the real path and require it to stay inside the root, which stops symlinks.
+- **Constant memory:** everything streams; no file is ever loaded whole.
 
-## 4. Limites conhecidos (hoje)
+## 4. Known limits (today)
 
-| Limite | Consequência | Caminho |
+| Limit | Consequence | Way forward |
 |---|---|---|
-| HTTP puro | Quem escuta a rede vê o conteúdo e o token | TLS embutido (rustls) com certificado autoassinado e fingerprint mostrado no terminal |
-| Um token para tudo | Não dá para revogar um dispositivo só | Pareamento por dispositivo (seção 5) |
-| Upload recomeça do zero se cair | Arquivos grandes em rede ruim | Upload retomável por offset (seção 5) |
-| No container, o endereço impresso é o IP interno | O usuário precisa saber o IP do host | `--public-url` |
-| Corrida entre dois uploads sem `overwrite` no mesmo caminho | O último rename vence | Criação exclusiva (`link` + `unlink`) se virar requisito |
-| Página sem hash no upload | Integridade só pelo TCP no caminho navegador → servidor | Vem junto com o TLS (o `crypto.subtle` passa a existir) |
+| Plain HTTP | Anyone listening on the network sees the content and the token | Built-in TLS (rustls) with a self-signed certificate and its fingerprint printed in the terminal |
+| One token for everything | A single device cannot be revoked | Per-device pairing (section 5) |
+| A dropped upload starts over | Large files on a bad network | Offset-based resumable upload (section 5) |
+| In a container, the printed address is the internal IP | The user has to know the host IP | `--public-url` |
+| Two uploads to the same path without `overwrite` can race | The last rename wins | Exclusive create (`link` + `unlink`) if it becomes a requirement |
+| The page sends no hash on upload | Browser → server integrity relies on TCP only | Comes with TLS (`crypto.subtle` becomes available) |
 
-## 5. Caminho para produto (roadmap)
+## 5. Path to a product (roadmap)
 
-A ordem abaixo é uma proposta. Cada passo mantém o protocolo atual
-funcionando.
+The order below is a proposal. Each step keeps the current protocol
+working.
 
-1. **Separar em crates** (workspace Cargo), sem mudar comportamento:
-   - `fireshare-core`: tipos, regras de caminho, hash, protocolo.
-   - `fireshare-server`: axum, armazenamento atrás de uma trait `Store` (disco hoje; S3 ou outro depois).
-   - `fireshare-client`: a lib que a CLI e futuros apps usam.
-   - `fireshare-cli`: o binário.
-2. **Socket de eventos:**
-   - `GET /api/events` em WebSocket, com eventos `file.stored`, `file.deleted`, `upload.progress` e `peer.joined`.
-   - A página atualiza sozinha e a CLI ganha `fireshare watch`, que espelha uma pasta nos dois sentidos.
-3. **TLS e pareamento:**
-   - Certificado autoassinado gerado na primeira execução, com fingerprint e QR code no terminal.
-   - Tokens por dispositivo, revogáveis.
-4. **Upload retomável:** `PATCH /api/uploads/{id}` com `Upload-Offset`, no estilo tus. A página e a CLI retomam de onde pararam.
-5. **Descoberta:** mDNS (`_fireshare._tcp`), para `fireshare send` achar o servidor na rede sem digitar o IP.
-6. **Interface:** a página atual vira uma SPA servida pelo binário (pastas, prévia, histórico, dispositivos pareados). Um app desktop (Tauri) reaproveita o `fireshare-client`.
-7. **Operação:** `DELETE` e renomear, cotas por dispositivo, métricas Prometheus em `/metrics`, logs JSON.
+1. **Split into crates** (Cargo workspace), with no behavior change:
+   - `fireshare-core`: types, path rules, hashing, protocol.
+   - `fireshare-server`: axum, storage behind a `Store` trait (disk today; S3 or others later).
+   - `fireshare-client`: the library the CLI and future apps use.
+   - `fireshare-cli`: the binary.
+2. **Event socket:**
+   - `GET /api/events` over WebSocket, with `file.stored`, `file.deleted`, `upload.progress` and `peer.joined` events.
+   - The page updates live and the CLI gains `fireshare watch`, which mirrors a folder both ways.
+3. **TLS and pairing:**
+   - A self-signed certificate generated on first run, with its fingerprint and a QR code in the terminal.
+   - Per-device, revocable tokens.
+4. **Resumable upload:** `PATCH /api/uploads/{id}` with `Upload-Offset`, tus style. The page and the CLI resume where they stopped.
+5. **Discovery:** mDNS (`_fireshare._tcp`), so `fireshare send` finds the server on the network without typing an IP.
+6. **Interface:** the current page becomes a SPA served by the binary (folders, preview, history, paired devices). A desktop app (Tauri) reuses `fireshare-client`.
+7. **Operations:** `DELETE` and rename, per-device quotas, Prometheus metrics at `/metrics`, JSON logs.
 
-**Regra para evoluir:** cada passo entra com teste de ponta a ponta em
-`tests/` e com o `make smoke` verde; os números do README só mudam com
-medição nova.
+**Rule for evolving:** every step lands with an end-to-end test in
+`tests/` and a green `make smoke`; the README numbers only change with a
+new measurement.

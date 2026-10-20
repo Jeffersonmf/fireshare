@@ -82,7 +82,7 @@ flowchart LR
 | `PUT /api/files/{path}` | token | Streams one file in; `?overwrite=true` to replace |
 
 Status codes, guarantees and known limits are in
-[`docs/design.md`](./docs/design.md) (in Portuguese).
+[`docs/design.md`](./docs/design.md).
 
 ## Requirements
 
@@ -99,10 +99,10 @@ make serve TOKEN=my-token          # same as: fireshare serve --dir ./shared --p
 ```
 
 ```text
-🔥 fireshare compartilhando ./shared
-   navegador: http://192.168.15.6:7878/
-   token:     my-token
-   cliente:   fireshare send <arquivos> --to http://192.168.15.6:7878 --token my-token
+🔥 fireshare sharing ./shared
+   browser: http://192.168.15.6:7878/
+   token:   my-token
+   client:  fireshare send <files> --to http://192.168.15.6:7878 --token my-token
 ```
 
 **Machine B, browser:** open the printed URL, paste the token, then drop files or pick a folder.
@@ -111,7 +111,7 @@ make serve TOKEN=my-token          # same as: fireshare serve --dir ./shared --p
 
 ```bash
 export FIRESHARE_SERVER=http://192.168.15.6:7878 FIRESHARE_TOKEN=my-token
-fireshare send ./projeto ./HANDOFF.md --as handoff   # folders go recursively
+fireshare send ./project ./HANDOFF.md --as handoff   # folders go recursively
 fireshare ls
 fireshare get handoff/HANDOFF.md -o ./in
 fireshare get --all -o ./in
@@ -142,16 +142,16 @@ make smoke     # release binary on a real port: send · ls · get --all · cmp �
 Output of `make smoke SIZE_MIB=1024`: a 1 GiB random file plus a nested folder, on loopback, Apple M5 Pro, release build.
 
 ```text
-📤 send (1024 MiB + diretório)
-3 arquivo(s), 1.0 GB em 3.59s (285.4 MB/s)
+📤 send (1024 MiB + directory)
+3 file(s), 1.0 GB in 3.68s (278.0 MB/s)
 📋 ls
     1.0 GB  smoke/big.bin
        8 B  smoke/proj/README.md
       13 B  smoke/proj/src/main.rs
 📥 get --all
-3 arquivo(s), 1.0 GB em 4.40s (232.8 MB/s)
-🔎 cmp: idênticos
-🔒 token errado: recusado
+3 file(s), 1.0 GB in 4.30s (238.2 MB/s)
+🔎 cmp: identical
+🔒 wrong token: refused
 ✅ smoke ok
 ```
 
@@ -223,7 +223,7 @@ tests/
 scripts/
   smoke.sh        release binary on a real port, with throughput
 docs/
-  design.md       protocol, guarantees, known limits, roadmap (pt-BR)
+  design.md       protocol, guarantees, known limits, roadmap
   assets/         logo, banner
 Dockerfile        musl build → FROM scratch
 Makefile          every command; make help
@@ -231,7 +231,7 @@ Makefile          every command; make help
 
 ## Roadmap
 
-The product path, detailed in [`docs/design.md`](./docs/design.md#5-caminho-para-produto-roadmap). None of this exists yet.
+The product path, detailed in [`docs/design.md`](./docs/design.md#5-path-to-a-product-roadmap). None of this exists yet.
 
 | Step | What it adds |
 |---|---|

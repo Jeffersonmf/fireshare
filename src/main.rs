@@ -121,7 +121,7 @@ async fn main() -> Result<()> {
                 );
             }
             println!(
-                "{} arquivo(s), {} em {}",
+                "{} file(s), {} in {}",
                 stored.len(),
                 human(total),
                 rate(total, started)
@@ -138,7 +138,7 @@ async fn main() -> Result<()> {
             let names = if all {
                 client.list().await?.into_iter().map(|e| e.path).collect()
             } else if names.is_empty() {
-                bail!("informe os arquivos ou use --all")
+                bail!("name the files to get, or use --all")
             } else {
                 names
             };
@@ -155,7 +155,7 @@ async fn main() -> Result<()> {
                 );
             }
             println!(
-                "{} arquivo(s), {} em {}",
+                "{} file(s), {} in {}",
                 names.len(),
                 human(total),
                 rate(total, started)
@@ -191,17 +191,17 @@ async fn serve(dir: PathBuf, addr: SocketAddr, token: Option<String>, max_mib: u
     } else {
         addr.ip().to_string()
     };
-    println!("🔥 fireshare compartilhando {}", dir.display());
-    println!("   navegador: http://{host}:{port}/");
+    println!("🔥 fireshare sharing {}", dir.display());
+    println!("   browser: http://{host}:{port}/");
     println!(
-        "   token:     {token}{}",
+        "   token:   {token}{}",
         if generated {
-            "  (gerado; use --token para fixar)"
+            "  (generated; pass --token to pin it)"
         } else {
             ""
         }
     );
-    println!("   cliente:   fireshare send <arquivos> --to http://{host}:{port} --token {token}");
+    println!("   client:  fireshare send <files> --to http://{host}:{port} --token {token}");
 
     axum::serve(listener, app)
         .with_graceful_shutdown(async {

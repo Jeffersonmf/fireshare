@@ -22,17 +22,17 @@ RELEASE  := target/release/$(BIN)
 TOKEN_ARG = $(if $(TOKEN),--token $(TOKEN))
 REMOTE    = --server $(SERVER) $(TOKEN_ARG)
 
-# ---------------------------------------------------------------- geral
+# ---------------------------------------------------------------- general
 
-help: ## 📖 Lista os comandos disponíveis, por seção
-	@echo "🔥 fireshare $(VERSION): comandos"
+help: ## 📖 Lists the available commands, by section
+	@echo "🔥 fireshare $(VERSION): commands"
 	@awk 'BEGIN {FS = ":.*?## "} \
 		/^# -+ / { sub(/^# -+ /, ""); printf "\n  \033[1m%s\033[0m\n", $$0; next } \
 		/^[a-zA-Z0-9_-]+:.*?## / { printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "  variáveis: PORT=$(PORT) DIR=$(DIR) SERVER=$(SERVER) OUT=$(OUT) TOKEN=… FILES=…"
+	@echo "  variables: PORT=$(PORT) DIR=$(DIR) SERVER=$(SERVER) OUT=$(OUT) TOKEN=… FILES=…"
 
-version: ## 🏷️  Mostra versão do crate, do toolchain e da máquina
+version: ## 🏷️  Shows the crate, toolchain and machine versions
 	@echo "fireshare $(VERSION)"
 	@rustc --version
 	@cargo --version
@@ -40,17 +40,17 @@ version: ## 🏷️  Mostra versão do crate, do toolchain e da máquina
 
 # ---------------------------------------------------------------- build
 
-build: ## 🔨 Compila (debug)
-	@echo "🔨 Compilando (debug)..."
+build: ## 🔨 Builds (debug)
+	@echo "🔨 Building (debug)..."
 	@cargo build
 
-release: ## 🚀 Compila otimizado para esta máquina (LTO + strip) em target/release/
-	@echo "🚀 Compilando release..."
+release: ## 🚀 Optimized build for this machine (LTO + strip) in target/release/
+	@echo "🚀 Building release..."
 	@cargo build --release
 	@ls -lh $(RELEASE) | awk '{print "   " $$9 "  " $$5}'
 
-dist: ## 📦 Binário universal macOS (arm64 + x86_64) em dist/: roda em qualquer Mac
-	@echo "📦 Compilando arm64 e x86_64..."
+dist: ## 📦 Universal macOS binary (arm64 + x86_64) in dist/: runs on any Mac
+	@echo "📦 Building arm64 and x86_64..."
 	@rustup target add aarch64-apple-darwin x86_64-apple-darwin >/dev/null
 	@cargo build --release --target aarch64-apple-darwin
 	@cargo build --release --target x86_64-apple-darwin
@@ -61,81 +61,81 @@ dist: ## 📦 Binário universal macOS (arm64 + x86_64) em dist/: roda em qualqu
 	@lipo -info dist/$(BIN)
 	@ls -lh dist/$(BIN) | awk '{print "   " $$9 "  " $$5}'
 
-install: ## 📥 Instala o fireshare no PATH (~/.cargo/bin)
+install: ## 📥 Installs fireshare on the PATH (~/.cargo/bin)
 	@cargo install --path . --locked
 	@echo "✅ $$(command -v $(BIN))"
 
-uninstall: ## 📤 Remove o fireshare do PATH
+uninstall: ## 📤 Removes fireshare from the PATH
 	@cargo uninstall $(BIN)
 
-# ---------------------------------------------------------------- execução
+# ---------------------------------------------------------------- run
 
-serve: release ## 📡 Compartilha DIR na PORT (TOKEN=… fixa o token; sem ele, um é gerado)
+serve: release ## 📡 Shares DIR on PORT (TOKEN=… pins the token; without it one is generated)
 	@$(RELEASE) serve --dir $(DIR) --port $(PORT) $(TOKEN_ARG)
 
-open: ## 🌐 Abre a página do servidor local no navegador
+open: ## 🌐 Opens the local server page in the browser
 	@open "http://127.0.0.1:$(PORT)/"
 
-send: release ## 📤 Envia FILES (arquivos e pastas) para SERVER
-	@test -n "$(FILES)" || (echo "uso: make send FILES=\"./pasta ./arquivo\" SERVER=http://ip:$(PORT) TOKEN=…" && exit 2)
+send: release ## 📤 Sends FILES (files and folders) to SERVER
+	@test -n "$(FILES)" || (echo "usage: make send FILES=\"./folder ./file\" SERVER=http://ip:$(PORT) TOKEN=…" && exit 2)
 	@$(RELEASE) send $(FILES) $(REMOTE)
 
-get: release ## 📥 Baixa tudo de SERVER para OUT
+get: release ## 📥 Downloads everything from SERVER into OUT
 	@$(RELEASE) get --all -o $(OUT) $(REMOTE)
 
-ls: release ## 📋 Lista os arquivos de SERVER
+ls: release ## 📋 Lists the files on SERVER
 	@$(RELEASE) ls $(REMOTE)
 
-# ---------------------------------------------------------------- qualidade
+# ---------------------------------------------------------------- quality
 
-test: ## 🧪 Toda a suíte: unitários + ponta a ponta (servidor real em porta local)
-	@echo "🧪 Rodando testes..."
+test: ## 🧪 Whole suite: unit + end to end (real server on a local port)
+	@echo "🧪 Running tests..."
 	@cargo test
 
-test-unit: ## 🧪 Só os unitários (regras de caminho)
+test-unit: ## 🧪 Unit tests only (path rules)
 	@cargo test --lib
 
-test-e2e: ## 🔌 Só os de ponta a ponta (tests/transfer.rs)
+test-e2e: ## 🔌 End-to-end tests only (tests/transfer.rs)
 	@cargo test --test transfer
 
-smoke: release ## 💨 Binário de release numa porta real: send, ls, get, cmp, token errado (SIZE_MIB=256)
+smoke: release ## 💨 Release binary on a real port: send, ls, get, cmp, wrong token (SIZE_MIB=256)
 	@SIZE_MIB=$(SIZE_MIB) scripts/smoke.sh $(RELEASE)
 
-fmt: ## 🎨 Formata o código (cargo fmt)
-	@echo "🎨 Formatando..."
+fmt: ## 🎨 Formats the code (cargo fmt)
+	@echo "🎨 Formatting..."
 	@cargo fmt
 
-fmt-check: ## 🎨 Verifica formatação sem alterar nada
+fmt-check: ## 🎨 Checks formatting without changing anything
 	@cargo fmt --check
 
-lint: ## 🔍 Clippy estrito em todos os alvos: qualquer warning quebra o build
-	@echo "🔍 Rodando clippy..."
+lint: ## 🔍 Strict clippy on all targets: any warning fails the build
+	@echo "🔍 Running clippy..."
 	@cargo clippy --all-targets -- -D warnings
 
-audit: ## 🛡️  Vulnerabilidades conhecidas nas dependências (cargo-audit, se instalado)
+audit: ## 🛡️  Known vulnerabilities in dependencies (cargo-audit, if installed)
 	@command -v cargo-audit >/dev/null \
 		&& cargo audit \
-		|| echo "⚠️  cargo-audit não instalado: cargo install cargo-audit --locked"
+		|| echo "⚠️  cargo-audit not installed: cargo install cargo-audit --locked"
 
-check: fmt-check lint test ## ✅ Roda tudo que o CI roda, localmente
+check: fmt-check lint test ## ✅ Runs everything CI runs, locally
 
-ci: check ## 🤖 Alias de check, usado pelo pipeline de CI
+ci: check ## 🤖 Alias of check, used by the CI pipeline
 
 # ---------------------------------------------------------------- docker
 
-docker-build: ## 🐳 Imagem Linux estática (musl, FROM scratch) do servidor
-	@echo "🐳 Buildando $(IMAGE)..."
+docker-build: ## 🐳 Static Linux server image (musl, FROM scratch)
+	@echo "🐳 Building $(IMAGE)..."
 	@docker build -t $(IMAGE) -t $(BIN):latest .
 	@docker image ls $(IMAGE) --format '   {{.Repository}}:{{.Tag}}  {{.Size}}'
 
-docker-run: docker-build ## 🐳 Roda o servidor em container (DIR montado em /shared, PORT exposta)
+docker-run: docker-build ## 🐳 Runs the server in a container (DIR mounted at /shared, PORT exposed)
 	@mkdir -p $(DIR)
 	@docker run --rm -it -p $(PORT):7878 -v "$$(cd $(DIR) && pwd)":/shared \
 		$(if $(TOKEN),-e FIRESHARE_TOKEN=$(TOKEN)) $(IMAGE)
 
-# ---------------------------------------------------------------- manutenção
+# ---------------------------------------------------------------- maintenance
 
-clean: ## 🧹 Remove artefatos de build (não toca em DIR nem em OUT)
-	@echo "🧹 Limpando..."
+clean: ## 🧹 Removes build artifacts (leaves DIR and OUT alone)
+	@echo "🧹 Cleaning..."
 	@cargo clean
 	@rm -rf dist

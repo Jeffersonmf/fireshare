@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,26 +29,26 @@
 <body>
 <main>
   <h1>🔥 <span>fire</span>share</h1>
-  <p class="sub">Envie e baixe arquivos desta máquina. Tudo exige o token mostrado no terminal do <code>fireshare serve</code>.</p>
+  <p class="sub">Send files to this machine and download from it. Everything needs the token printed by <code>fireshare serve</code>.</p>
 
   <div class="card">
     <input id="token" type="password" placeholder="token" autocomplete="off">
   </div>
 
   <div class="card">
-    <div id="drop">Arraste arquivos aqui</div>
+    <div id="drop">Drop files here</div>
     <div class="row">
-      <label class="btn">Arquivos<input id="files" type="file" multiple hidden></label>
-      <label class="btn">Pasta<input id="folder" type="file" webkitdirectory multiple hidden></label>
-      <label><input id="overwrite" type="checkbox"> sobrescrever</label>
+      <label class="btn">Files<input id="files" type="file" multiple hidden></label>
+      <label class="btn">Folder<input id="folder" type="file" webkitdirectory multiple hidden></label>
+      <label><input id="overwrite" type="checkbox"> overwrite</label>
     </div>
     <progress id="bar" value="0" max="1" hidden></progress>
     <div id="log"></div>
   </div>
 
   <div class="card">
-    <div class="row" style="margin:0 0 8px"><strong style="flex:1">Arquivos compartilhados</strong><button id="refresh">Atualizar</button></div>
-    <table><thead><tr><th>Arquivo</th><th class="n">Tamanho</th></tr></thead><tbody id="list"></tbody></table>
+    <div class="row" style="margin:0 0 8px"><strong style="flex:1">Shared files</strong><button id="refresh">Refresh</button></div>
+    <table><thead><tr><th>File</th><th class="n">Size</th></tr></thead><tbody id="list"></tbody></table>
   </div>
 </main>
 <script>
@@ -66,7 +66,7 @@ async function refresh() {
   body.innerHTML = "";
   if (!tokenBox.value) return;
   const r = await fetch("/api/files", { headers: { Authorization: "Bearer " + tokenBox.value } });
-  if (!r.ok) { log("lista: " + r.status + " " + (await r.text()), "err"); return; }
+  if (!r.ok) { log("list: " + r.status + " " + (await r.text()), "err"); return; }
   for (const f of await r.json()) {
     const tr = document.createElement("tr");
     const a = document.createElement("a");
@@ -91,13 +91,13 @@ function put(file, path) {
       else log("✘ " + path + ": " + xhr.status + " " + xhr.responseText, "err");
       resolve();
     };
-    xhr.onerror = () => { log("✘ " + path + ": falha de rede", "err"); resolve(); };
+    xhr.onerror = () => { log("✘ " + path + ": network error", "err"); resolve(); };
     xhr.send(file);
   });
 }
 
 async function sendAll(files) {
-  if (!tokenBox.value) { log("informe o token", "err"); return; }
+  if (!tokenBox.value) { log("enter the token first", "err"); return; }
   for (const f of files) await put(f, f.webkitRelativePath || f.name);
   $("bar").hidden = true;
   refresh();
